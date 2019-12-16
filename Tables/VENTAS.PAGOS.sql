@@ -1,0 +1,64 @@
+CREATE TABLE [VENTAS].[PAGOS]
+(
+[ID_PAGO] [int] NOT NULL IDENTITY(1, 1),
+[ID_CLIENTE] [int] NOT NULL,
+[FECHA_PAGO] [varchar] (15) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[VALOR_PAGO] [numeric] (8, 2) NOT NULL
+) ON [BS_VENTAS]
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_NULLS ON
+GO
+/*======================================================*/
+/* CREACION DE TRIGGER: TRIGGER_PAGO                   */
+/*======================================================*/
+CREATE TRIGGER [VENTAS].[TRIGGER_PAGO]
+ON [VENTAS].[PAGOS]
+AFTER INSERT
+AS
+BEGIN
+	/*======================================================*/
+	/* DECLARACION Y ASIGNACION DE VARIABLES                */
+	/*======================================================*/
+	DECLARE @ID_CLIENTE INT,
+			@SALDO_DEUDOR NUMERIC(8,2),
+			@VALOR_PAGO NUMERIC(8,2);
+
+	SELECT @ID_CLIENTE = ID_CLIENTE,
+		   @VALOR_PAGO = VALOR_PAGO
+	FROM INSERTED;
+
+	SELECT @SALDO_DEUDOR = SALDO_DEUDOR
+	FROM VENTAS.DEUDOR 
+	WHERE ID_CLIENTE = @ID_CLIENTE
+
+	/*======================================================*/
+	/* COMPROBAR SI EXISTEN DEUDORES                        */
+	/*======================================================*/
+	IF EXISTS (SELECT * FROM VENTAS.DEUDOR WHERE ID_CLIENTE = @ID_CLIENTE)
+		BEGIN
+			UPDATE VENTAS.DEUDOR SET SALDO_DEUDOR = SALDO_DEUDOR - @VALOR_PAGO
+			WHERE ID_CLIENTE = @ID_CLIENTE
+		END
+
+		/*======================================================*/
+		/* COMPROBAR SI LA DEUDA YA FUE CANCELADA EN TOTALIDAD  */
+		/*======================================================*/
+		IF @SALDO_DEUDOR - @VALOR_PAGO = 0
+			BEGIN
+				DELETE FROM VENTAS.DEUDOR 
+				WHERE ID_CLIENTE = @ID_CLIENTE
+				PRINT 'EL CLIENTE HA CANCELADO TODAS SUS DEUDAS'
+			END
+
+	ELSE
+		BEGIN
+			PRINT 'EL CLIENTE NO DEBE NADA'
+		END
+END
+GO
+ALTER TABLE [VENTAS].[PAGOS] ADD CONSTRAINT [PK_PAGOS] PRIMARY KEY NONCLUSTERED  ([ID_PAGO]) ON [BS_VENTAS]
+GO
+ALTER TABLE [VENTAS].[PAGOS] ADD CONSTRAINT [FK_PAGOS_RELATIONS_CLIENTE] FOREIGN KEY ([ID_CLIENTE]) REFERENCES [VENTAS].[CLIENTE] ([ID_CLIENTE])
+GO
