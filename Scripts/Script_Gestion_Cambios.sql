@@ -29,9 +29,22 @@ EXEC sp_helpindex 'VENTAS.CLIENTE'
 EXEC sp_helpindex 'VENTAS.COMPRA'
 EXEC sp_helpindex 'VENTAS.DETALLE_COMPRA'
 
-/*==============================*/
-/* Registro de PK, FK e Indices */		                                                
-/*==============================*/
+/*====================*/
+/* Verificar Triggers */		                                                
+/*====================*/
 
+SELECT * FROM SYS.triggers
+
+/*======================================*/
+/* Verificar Procedimientos almacenados */		                                                
+/*======================================*/
+
+SELECT * FROM SYS.procedures
+
+/*==================*/
+/* Verificar Vistas */		                                                
+/*==================*/
+
+SELECT * FROM SYS.views
 
 
